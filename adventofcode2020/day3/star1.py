@@ -60,18 +60,29 @@ def walkthrough(world, pos, slope):
             break
 
 
-def solve(raw_data):
-    """Solve the problem for Day 3 Star 1"""
-    # parse the world into a dict of dict structure
-    world = {
+def make_world(raw_data):
+    """Make a world from ``raw_data``
+
+    :param str raw_data: a string representation of the world
+    :return: a dict of dict of the world as ``[y][x] == tile``
+    :rtype: dict
+    """
+    return {
         y: dict(enumerate(line))
         for y, line in enumerate(raw_data.strip().splitlines())
     }
 
-    # initial position and slope
-    slope = (3, 1)
-    pos = (0, 0)
 
+def tree_found(world, pos, slope):
+    """Compute the number of tree found in a world using a given ``slope``
+
+    :param dict world: a dict of dict of the world as ``[y][x] == tile``
+    :param tuple pos: the current position as ``(x, y)``
+    :param tuple slope: the slope parameter as ``(x modifier, y modifier)``
+    :return: the number of tree found in the world starting at ``pos`` and
+             following the ``slope`` movement in the world
+    :rtype: int
+    """
     # compute slope the world
     return sum(
         1 for line in walkthrough(world, pos, slope) if line[1] is True
@@ -83,4 +94,4 @@ if __name__ == "__main__":
     with open(INPUT_FILE, 'r', encoding='utf-8') as fd:
         raw_input = fd.read()
 
-    print(solve(raw_input))
+    print(tree_found(make_world(raw_input), (0, 0), (3, 1)))
