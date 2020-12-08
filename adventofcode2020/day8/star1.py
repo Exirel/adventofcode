@@ -5,6 +5,16 @@ import os
 INPUT_FILE = os.path.join(os.path.dirname(__file__), 'input.txt')
 
 
+class ProgramExit(Exception):
+    """Exception raised when a program exit."""
+    def __init__(self, position, accumulator, visited):
+        self.position = position
+        self.accumulator = accumulator
+        self.visited = visited
+        super().__init__(
+            'Program exit at %d with value %d' % (position, accumulator))
+
+
 def accumulate(position, accumulator, value):
     """Implement the ``acc`` instruction.
 
@@ -61,13 +71,24 @@ def parse_program(raw):
     }
 
 
-if __name__ == "__main__":
+def run_until_loop(program):
+    """Run the ``program`` until it loop or exit properly.
 
-    # get raw input from text file
-    with open(INPUT_FILE, 'r', encoding='utf-8') as fd:
-        raw_input = fd.read()
+    :param dict program: a dict of instruction where each key is a position,
+                         and each value is the operation to perform at said
+                         position (including its value)
+    :return: a 3-value tuple of next position, current accumulator,
+             and the list of visited instructions
+    :rtype: tuple
+    :raise ProgramExit: when the program ends at a position that doesn't exist
 
-    program = parse_program(raw_input.strip())
+    The program is a "boot code": the boot code is represented as a text file
+    with one instruction per line of text. Each instruction consists of an
+    operation (acc, jmp, or nop) and an argument (a signed number like +4 or
+    -20).
+
+    Each operation is mapped into the ``INSTRUCTIONS`` dict.
+    """
     accumulator = 0
     position = 0
     visited = []
@@ -78,14 +99,31 @@ if __name__ == "__main__":
         operation = INSTRUCTIONS[instruction]
         position, accumulator = operation(position, accumulator, value)
 
+        # want to debug?
+        """
         print('%d\t%d\t%d (%s %s)' % (
             visited[-1], accumulator, position, instruction, value
         ))
+        """
 
         if position in visited:
+            # loop detected, we stop execution
             break
 
         if position not in program:
-            raise RuntimeError('Program instruction overflow')
+            # would jump to a non-existing position; exit program
+            raise ProgramExit(position, accumulator, visited)
+
+    return position, accumulator, visited
+
+
+if __name__ == "__main__":
+
+    # get raw input from text file
+    with open(INPUT_FILE, 'r', encoding='utf-8') as fd:
+        raw_input = fd.read()
+
+    program = parse_program(raw_input.strip())
+    position, accumulator, visited = run_until_loop(program)
 
     print(accumulator)
